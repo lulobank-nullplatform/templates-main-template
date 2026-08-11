@@ -12,7 +12,10 @@ jobs:
       - run:
           name: Start nullplatform CI
           command: |
-            REPOSITORY_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            REPOSITORY_URL="${CIRCLE_REPOSITORY_URL%.git}"
+            case "$REPOSITORY_URL" in
+              git@*) REPOSITORY_URL="https://$(echo "$REPOSITORY_URL" | sed -E 's#^git@([^:]+):#\1/#')" ;;
+            esac
             COMMIT_PERMALINK="${REPOSITORY_URL}/commit/${CIRCLE_SHA1}"
             DESCRIPTION="$(git log -1 --pretty=%B)"
             np build start \
@@ -31,20 +34,29 @@ jobs:
       - run:
           name: Push asset
           command: |
-            REPOSITORY_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            REPOSITORY_URL="${CIRCLE_REPOSITORY_URL%.git}"
+            case "$REPOSITORY_URL" in
+              git@*) REPOSITORY_URL="https://$(echo "$REPOSITORY_URL" | sed -E 's#^git@([^:]+):#\1/#')" ;;
+            esac
             np asset push --type docker-image --source main \
               --build-id "$(cat /tmp/np_build_id)" \
               --repository "$REPOSITORY_URL"
       - run:
           name: End nullplatform CI (success)
           command: |
-            REPOSITORY_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            REPOSITORY_URL="${CIRCLE_REPOSITORY_URL%.git}"
+            case "$REPOSITORY_URL" in
+              git@*) REPOSITORY_URL="https://$(echo "$REPOSITORY_URL" | sed -E 's#^git@([^:]+):#\1/#')" ;;
+            esac
             np build update --id "$(cat /tmp/np_build_id)" --repository "$REPOSITORY_URL" --status successful
       - run:
           name: End nullplatform CI (failure)
           when: on_fail
           command: |
-            REPOSITORY_URL="https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            REPOSITORY_URL="${CIRCLE_REPOSITORY_URL%.git}"
+            case "$REPOSITORY_URL" in
+              git@*) REPOSITORY_URL="https://$(echo "$REPOSITORY_URL" | sed -E 's#^git@([^:]+):#\1/#')" ;;
+            esac
             np build update --id "$(cat /tmp/np_build_id)" --repository "$REPOSITORY_URL" --status failed
 
 workflows:
