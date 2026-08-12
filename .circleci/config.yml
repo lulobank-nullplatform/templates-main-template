@@ -42,6 +42,29 @@ jobs:
               --build-id "$(cat /tmp/np_build_id)" \
               --repository "$REPOSITORY_URL"
       - run:
+          name: Add quality & security metadata
+          # Simulates the outcome of an external security scan + quality gates.
+          # Once those finish, their results are attached to the nullplatform
+          # build as metadata. One explicit call per spec so it's clear which
+          # metadata is being injected and from which file.
+          command: |
+            BUILD_ID="$(cat /tmp/np_build_id)"
+            echo "Injecting quality & security metadata into build ${BUILD_ID}..."
+
+            echo "  - coverage"
+            np metadata create --entity build --id "$BUILD_ID" \
+              --data "$(cat .nullplatform/metadata/coverage.json)"
+
+            echo "  - security"
+            np metadata create --entity build --id "$BUILD_ID" \
+              --data "$(cat .nullplatform/metadata/security.json)"
+
+            echo "  - quality_insights"
+            np metadata create --entity build --id "$BUILD_ID" \
+              --data "$(cat .nullplatform/metadata/quality_insights.json)"
+
+            echo "Metadata injected successfully."
+      - run:
           name: End nullplatform CI (success)
           command: |
             REPOSITORY_URL="${CIRCLE_REPOSITORY_URL%.git}"
